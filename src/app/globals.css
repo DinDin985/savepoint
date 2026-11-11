@@ -1,0 +1,172 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --font-pixel: var(--font-silkscreen);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Savepoint status colours */
+  --color-played: var(--played);
+  --color-playing: var(--playing);
+  --color-wishlist: var(--wishlist);
+  --color-liked: var(--liked);
+  --color-star: var(--star);
+
+  /* Steam review styling (used only by review components) */
+  --color-steam-bg: var(--steam-bg);
+  --color-steam-panel: var(--steam-panel);
+  --color-steam-panel-2: var(--steam-panel-2);
+  --color-steam-text: var(--steam-text);
+  --color-steam-muted: var(--steam-muted);
+  --color-steam-blue: var(--steam-blue);
+  --color-steam-positive: var(--steam-positive);
+  --color-steam-negative: var(--steam-negative);
+  --color-steam-mixed: var(--steam-mixed);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+}
+
+/*
+ * Savepoint is a dark-only product (like a game launcher at 2am).
+ * :root and .dark share the same palette.
+ */
+:root,
+.dark {
+  --background: oklch(0.165 0.018 255);
+  --foreground: oklch(0.95 0.008 250);
+  --card: oklch(0.205 0.022 255);
+  --card-foreground: oklch(0.95 0.008 250);
+  --popover: oklch(0.215 0.024 255);
+  --popover-foreground: oklch(0.95 0.008 250);
+  --primary: oklch(0.82 0.17 160);
+  --primary-foreground: oklch(0.18 0.03 160);
+  --secondary: oklch(0.265 0.025 255);
+  --secondary-foreground: oklch(0.93 0.01 250);
+  --muted: oklch(0.25 0.02 255);
+  --muted-foreground: oklch(0.70 0.025 250);
+  --accent: oklch(0.29 0.03 255);
+  --accent-foreground: oklch(0.96 0.008 250);
+  --destructive: oklch(0.66 0.21 22);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.82 0.17 160 / 70%);
+  --chart-1: oklch(0.82 0.17 160);
+  --chart-2: oklch(0.75 0.14 230);
+  --chart-3: oklch(0.80 0.16 80);
+  --chart-4: oklch(0.70 0.18 320);
+  --chart-5: oklch(0.68 0.19 25);
+  --radius: 0.7rem;
+
+  --played: oklch(0.82 0.17 160);
+  --playing: oklch(0.76 0.14 230);
+  --wishlist: oklch(0.72 0.17 295);
+  --liked: oklch(0.72 0.2 10);
+  --star: oklch(0.84 0.16 80);
+
+  --steam-bg: #1b2838;
+  --steam-panel: #16202d;
+  --steam-panel-2: #213244;
+  --steam-text: #c6d4df;
+  --steam-muted: #8091a2;
+  --steam-blue: #66c0f4;
+  --steam-positive: #66c0f4;
+  --steam-negative: #a34c25;
+  --steam-mixed: #b9a074;
+
+  --sidebar: oklch(0.205 0.022 255);
+  --sidebar-foreground: oklch(0.95 0.008 250);
+  --sidebar-primary: oklch(0.82 0.17 160);
+  --sidebar-primary-foreground: oklch(0.18 0.03 160);
+  --sidebar-accent: oklch(0.29 0.03 255);
+  --sidebar-accent-foreground: oklch(0.96 0.008 250);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.82 0.17 160 / 70%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(1200px 500px at 85% -10%, oklch(0.82 0.17 160 / 7%), transparent 60%),
+      radial-gradient(900px 400px at -10% 10%, oklch(0.72 0.17 295 / 6%), transparent 60%);
+    background-attachment: fixed;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: oklch(0.82 0.17 160 / 35%);
+  }
+}
+
+@layer utilities {
+  /* Subtle lift used by interactive cards and buttons */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
