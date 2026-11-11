@@ -1,11 +1,11 @@
 import "server-only"
 import { randomUUID } from "node:crypto"
-import { and, eq, isNull, notExists, sql, type SQL } from "drizzle-orm"
+import { and, eq, inArray, isNull, notExists, sql, type SQL } from "drizzle-orm"
 import type { BatchItem } from "drizzle-orm/batch"
 import { Effect, Schema } from "effect"
 import { logActivity } from "@/lib/activity"
 import type { AppDb } from "@/lib/db/client"
-import { games, libraryEntries, reviews } from "@/lib/db/schema"
+import { activities, games, libraryEntries, reviews, reviewVotes } from "@/lib/db/schema"
 import { dbQuery } from "@/lib/effect/database"
 import { ConflictError, NotFoundError } from "@/lib/effect/errors"
 import { validate } from "@/lib/effect/validation"
@@ -331,8 +331,14 @@ export const deleteReview = Effect.fn("library.deleteReview")(function* (userId:
   if (!prev.state.review) {
     return yield* new NotFoundError({ message: "You haven't reviewed this game.", entity: "review" })
   }
-  const next = yield* writeThenLoad("library.deleteReview", userId, gameId, (db) => [
-    db.delete(reviews).where(reviewKey(userId, gameId)),
-  ])
+  const next = yield* writeThenLoad("library.deleteReview", userId, gameId, (db) => {
+    const reviewIds = db.select({ id: reviews.id }).from(reviews).where(reviewKey(userId, gameId))
+    return [
+      // explicit cleanup: hosted libSQL connections may not enforce ON DELETE CASCADE
+      db.delete(reviewVotes).where(inArray(reviewVotes.reviewId, reviewIds)),
+      db.delete(activities).where(inArray(activities.reviewId, reviewIds)),
+      db.delete(reviews).where(reviewKey(userId, gameId)),
+    ]
+  })
   return next.state
 })
