@@ -87,6 +87,8 @@ type T = typeof S.Type
 - Wishlisting is rejected (`ConflictError`) if the game is already played or being played.
 - Marking **playing** ⇒ `wishlisted = false`, `startedPlayingAt = now`. Stopping with "finished" ⇒ `played = true`.
 - A row with every flag false, no rating and no review is deleted.
+- Marking **played** or **liking** also removes the game from the wishlist.
+- Un-marking **played** clears that game's rating and like, and is refused (`ConflictError`) while the user has a review of it.
 
 ### External data caveats
 - Epic's GraphQL endpoint frequently answers server-side requests with a Cloudflare bot challenge (`cf-mitigated: challenge`, HTTP 403). Treat Epic data as best-effort: try the live call (only when `epic.namespace` is set), fall back to the snapshot, and otherwise show a friendly "see ratings on the Epic Games Store" notice with `epic.url`. Never try to bypass bot protection (same for SteamDB, which always returns 403).

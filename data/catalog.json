@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T02:27:12.817Z",
+  "generatedAt": "2026-11-11T02:57:01.897Z",
   "games": [
     {
       "slug": "elden-ring",
@@ -6274,7 +6274,7 @@
         "painterly"
       ],
       "tier": "aaa",
-      "featured": false,
+      "featured": true,
       "coverImage": "https://upload.wikimedia.org/wikipedia/en/f/fb/The_Legend_of_Zelda_Tears_of_the_Kingdom_cover.jpg",
       "heroImage": "https://upload.wikimedia.org/wikipedia/en/2/22/Tears_of_the_kingdom_contraptions.jpg",
       "headerImage": null,
@@ -6331,7 +6331,7 @@
         "stylized-3d"
       ],
       "tier": "aaa",
-      "featured": false,
+      "featured": true,
       "coverImage": "https://upload.wikimedia.org/wikipedia/en/8/8d/Super_Mario_Odyssey.jpg",
       "heroImage": "https://upload.wikimedia.org/wikipedia/en/7/79/Super_Mario_Odyssey%2C_Seaside_Kingdom.png",
       "headerImage": null,
@@ -6489,7 +6489,7 @@
         "stylized-3d"
       ],
       "tier": "aaa",
-      "featured": false,
+      "featured": true,
       "coverImage": "https://upload.wikimedia.org/wikipedia/en/6/65/Mario_Kart_World_Cover_Artwork.png",
       "heroImage": "https://upload.wikimedia.org/wikipedia/en/0/0c/Mario_Kart_World_Knockout_Tour.jpeg",
       "headerImage": null,

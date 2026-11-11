@@ -9,7 +9,14 @@ import { cn } from "@/lib/utils"
 export function SearchBox({ className, onNavigate }: { className?: string; onNavigate?: () => void }) {
   const router = useRouter()
   const params = useSearchParams()
-  const [q, setQ] = useState(params.get("q") ?? "")
+  const urlQ = params.get("q") ?? ""
+  const [q, setQ] = useState(urlQ)
+  // keep the box in sync when the browse page's filter bar changes ?q=
+  const [syncedQ, setSyncedQ] = useState(urlQ)
+  if (urlQ !== syncedQ) {
+    setSyncedQ(urlQ)
+    setQ(urlQ)
+  }
 
   return (
     <form

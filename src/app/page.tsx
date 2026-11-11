@@ -1,14 +1,88 @@
-import { GameGrid } from "@/components/game/game-card"
-import { runEffect } from "@/lib/effect/runtime"
-import { getAllGameSummaries } from "@/lib/games/core"
+import { Suspense } from "react"
+import { FeaturedCarouselSkeleton } from "@/components/discover/featured-carousel"
+import { FeatureGrid } from "@/components/discover/feature-grid"
+import { FreshReviewsSkeleton } from "@/components/discover/fresh-reviews"
+import { SignedInHero, SignedOutHero } from "@/components/discover/home-hero"
+import {
+  ArtStyleSection,
+  ArtStyleSkeleton,
+  FeaturedSection,
+  FreshReviewsSection,
+  HeroMarqueeSection,
+  MarqueeSkeleton,
+  NewAndUpcomingSection,
+  NintendoSection,
+  PopularThisWeekSection,
+  SignedInHeroSection,
+  StatsSection,
+  TierRowSection,
+  TopRatedSection,
+} from "@/components/discover/home-sections"
+import { PosterRowSkeleton } from "@/components/discover/poster-row"
+import { getCurrentUser } from "@/lib/auth/current-user"
 
-// STUB home page — replaced by the "discover" feature.
 export default async function HomePage() {
-  const games = await runEffect(getAllGameSummaries())
+  const user = await getCurrentUser()
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <h1 className="mb-6 text-3xl font-bold">Savepoint</h1>
-      <GameGrid games={games} />
-    </div>
+    <>
+      {user ? (
+        <Suspense fallback={<SignedInHero user={user} snapshot={null} />}>
+          <SignedInHeroSection user={user} />
+        </Suspense>
+      ) : (
+        <SignedOutHero
+          marquee={
+            <Suspense fallback={<MarqueeSkeleton />}>
+              <HeroMarqueeSection />
+            </Suspense>
+          }
+        />
+      )}
+
+      <div className="mx-auto max-w-7xl space-y-12 px-4 py-8 sm:space-y-16 sm:px-6 sm:py-10">
+        <Suspense fallback={<FeaturedCarouselSkeleton />}>
+          <FeaturedSection />
+        </Suspense>
+
+        <Suspense fallback={<PosterRowSkeleton />}>
+          <PopularThisWeekSection />
+        </Suspense>
+
+        <Suspense fallback={<PosterRowSkeleton />}>
+          <TopRatedSection />
+        </Suspense>
+
+        <Suspense fallback={<PosterRowSkeleton />}>
+          <NintendoSection />
+        </Suspense>
+
+        <Suspense fallback={<PosterRowSkeleton />}>
+          <TierRowSection tier="indie" />
+        </Suspense>
+
+        <Suspense fallback={<PosterRowSkeleton />}>
+          <TierRowSection tier="aaa" />
+        </Suspense>
+
+        <Suspense fallback={<PosterRowSkeleton />}>
+          <NewAndUpcomingSection />
+        </Suspense>
+
+        <Suspense fallback={<ArtStyleSkeleton />}>
+          <ArtStyleSection />
+        </Suspense>
+
+        <Suspense fallback={<FreshReviewsSkeleton />}>
+          <FreshReviewsSection />
+        </Suspense>
+
+        {!user && <FeatureGrid />}
+
+        <Suspense fallback={null}>
+          <StatsSection />
+        </Suspense>
+      </div>
+    </>
   )
 }
