@@ -56,7 +56,9 @@ export default async function FeedPage({
           <p className="mt-1 text-sm text-muted-foreground">
             {followsNobody
               ? "Follow players to fill this page with their ratings, reviews and Top 10 updates."
-              : `What the ${following} ${following === 1 ? "player" : "players"} you follow have been up to.`}
+              : following === 1
+                ? "What the player you follow has been up to."
+                : `What the ${following} players you follow have been up to.`}
           </p>
         </div>
         <FeedOwnToggle includeOwn={includeOwn} />
