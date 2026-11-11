@@ -81,4 +81,19 @@ drizzle/          generated SQL migrations
 
 ## Status
 
-_Filled in at submission: what works, what's incomplete._
+**Works (tested in the browser):** sign-up / sign-in / sign-out; game pages with live Steam reviews, the Steam-style
+review chart and live player counts; rating (half-stars), reviews, wishlist, currently playing, played and like — including
+the business rules (e.g. rating a game marks it played and removes it from the wishlist; wishlisting a played game is refused);
+community reviews with helpful/funny votes; following users; the friends activity feed; the Top 10 editor and profile
+showcase; profile, stats and members pages; browse/search with filters; categories (genre, AAA / indie, art style, Nintendo);
+responsive layout down to 375px. Production runs on Vercel with Turso (hosted SQLite).
+
+**Incomplete / known limitations**
+- **Epic Games Store ratings:** Epic's API answers server-side requests with a bot challenge, so the Epic tab links to the
+  store page instead of showing live ratings (the code path is there and works when Epic responds).
+- **SteamDB:** SteamDB blocks automated requests, so the current player count comes from the official Steam Web API and the
+  24-hour / all-time peaks from SteamCharts; every game links to its SteamDB charts.
+- **No paid features:** Stripe was intentionally left out for now.
+- Nintendo games have no store reviews or player counts (Nintendo doesn't publish them) — their pages rely on Savepoint
+  community reviews and stats.
+- No password reset / email verification, and no rate limiting on sign-in yet.
