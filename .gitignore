@@ -49,3 +49,6 @@ local.db-*
 .env
 .env*.local
 .vercel
+
+.vercel
+.env*

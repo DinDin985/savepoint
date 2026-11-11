@@ -8,7 +8,7 @@ pin a ranked **Top 10** to your profile, and follow friends to see what they're 
 what the rest of the world thinks — live **Steam reviews** (with a Steam-style positive/negative chart), **Epic Games
 Store** player ratings, and **live Steam player counts** with 24-hour and all-time peaks.
 
-- **Live demo:** _added after deployment_
+- **Live demo:** https://savepoint-two-alpha.vercel.app
 - **Demo video:** _added after recording_
 
 ## Who it's for
