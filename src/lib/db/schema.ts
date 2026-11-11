@@ -17,7 +17,8 @@ import {
 export type EpicPoll = { title: string; text: string; emoji: string | null; votes: number }
 export type EpicInfo = {
   productSlug: string
-  namespace: string
+  /** Epic sandbox id used by the ratings API; null when it couldn't be resolved */
+  namespace: string | null
   url: string
   averageRating: number | null
   polls: EpicPoll[]

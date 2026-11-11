@@ -16,7 +16,9 @@
 //   genres          1-4 slugs from GENRES
 //   artStyles       1-2 slugs from ART_STYLES
 //   featured        true for the home page hero rotation (~12 games)
-//   shortDescription optional curated override when the source text is misleading
+//   aboutFrom       'wikipedia' to use the article lead instead of Steam's (promo-only) about text
+//   shortDescription / releaseDate / developers / publishers
+//                   optional curated overrides when the source data is wrong or misleading
 
 export const GENRES = [
   'action', 'adventure', 'rpg', 'soulslike', 'roguelike', 'metroidvania', 'platformer',
@@ -64,7 +66,7 @@ export const GAMES = [
     genres: ['rpg', 'action', 'narrative'], artStyles: ['stylized-3d', 'anime'] },
   { title: 'Hogwarts Legacy', steamAppId: 990080, epic: true, tier: 'aaa', platforms: ALL,
     genres: ['rpg', 'action', 'open-world', 'adventure'], artStyles: ['photorealistic'] },
-  { title: 'Sekiro: Shadows Die Twice', steamAppId: 814380, tier: 'aaa', platforms: PC_PS_XB,
+  { title: 'Sekiro: Shadows Die Twice', steamAppId: 814380, aboutFrom: 'wikipedia', tier: 'aaa', platforms: PC_PS_XB,
     genres: ['action', 'soulslike', 'adventure'], artStyles: ['photorealistic'] },
   { title: "Death Stranding Director's Cut", steamAppId: 1850570, epic: true, tier: 'aaa', platforms: PC_PS_XB,
     genres: ['adventure', 'open-world', 'action', 'narrative'], artStyles: ['photorealistic'] },
@@ -74,7 +76,8 @@ export const GAMES = [
     genres: ['rpg', 'narrative', 'simulation'], artStyles: ['anime', 'cel-shaded'] },
   { title: 'Helldivers 2', steamAppId: 553850, tier: 'aa', platforms: PC_PS_XB,
     genres: ['shooter', 'action'], artStyles: ['photorealistic'] },
-  { title: 'Counter-Strike 2', steamAppId: 730, tier: 'aaa', platforms: ['pc'],
+  // App 730 keeps CS:GO's 2012 store date; CS2 replaced it on 27 Sep 2023.
+  { title: 'Counter-Strike 2', steamAppId: 730, releaseDate: '2023-09-27', tier: 'aaa', platforms: ['pc'],
     genres: ['shooter', 'action'], artStyles: ['photorealistic'] },
   { title: 'Dota 2', steamAppId: 570, tier: 'aaa', platforms: ['pc'],
     genres: ['strategy', 'action'], artStyles: ['stylized-3d'] },
@@ -102,7 +105,7 @@ export const GAMES = [
     genres: ['roguelike', 'action'], artStyles: ['hand-drawn', 'painterly'] },
   { title: 'Hades II', steamAppId: 1145350, epic: true, tier: 'indie', platforms: ['pc', 'nintendo'],
     genres: ['roguelike', 'action'], artStyles: ['hand-drawn', 'painterly'], featured: true },
-  { title: 'Hollow Knight', steamAppId: 367520, tier: 'indie', platforms: ALL,
+  { title: 'Hollow Knight', steamAppId: 367520, aboutFrom: 'wikipedia', tier: 'indie', platforms: ALL,
     genres: ['metroidvania', 'soulslike', 'platformer', 'action'], artStyles: ['hand-drawn'] },
   { title: 'Hollow Knight: Silksong', steamAppId: 1030300, tier: 'indie', platforms: ALL,
     genres: ['metroidvania', 'soulslike', 'platformer', 'action'], artStyles: ['hand-drawn'], featured: true },
@@ -132,7 +135,7 @@ export const GAMES = [
     genres: ['action', 'adventure', 'puzzle'], artStyles: ['low-poly', 'stylized-3d'] },
   { title: 'Vampire Survivors', steamAppId: 1794680, epic: true, tier: 'indie', platforms: ALL,
     genres: ['roguelike', 'action'], artStyles: ['pixel-art'] },
-  { title: 'Return of the Obra Dinn', steamAppId: 653530, tier: 'indie', platforms: ALL,
+  { title: 'Return of the Obra Dinn', steamAppId: 653530, aboutFrom: 'wikipedia', tier: 'indie', platforms: ALL,
     genres: ['puzzle', 'narrative', 'adventure'], artStyles: ['minimalist'] },
   { title: 'Hotline Miami', steamAppId: 219150, tier: 'indie', platforms: ALL,
     genres: ['action', 'shooter'], artStyles: ['pixel-art'] },
@@ -140,7 +143,7 @@ export const GAMES = [
     genres: ['metroidvania', 'puzzle', 'platformer'], artStyles: ['pixel-art'] },
   { title: 'Sea of Stars', steamAppId: 1244090, tier: 'indie', platforms: ALL,
     genres: ['rpg', 'adventure'], artStyles: ['pixel-art'] },
-  { title: 'Ori and the Will of the Wisps', steamAppId: 1057090, tier: 'indie', platforms: ['pc', 'nintendo', 'xbox'],
+  { title: 'Ori and the Will of the Wisps', steamAppId: 1057090, aboutFrom: 'wikipedia', tier: 'indie', platforms: ['pc', 'nintendo', 'xbox'],
     genres: ['metroidvania', 'platformer', 'action'], artStyles: ['painterly'] },
   { title: 'Subnautica', steamAppId: 264710, epic: true, tier: 'indie', platforms: ALL,
     genres: ['survival', 'adventure', 'open-world'], artStyles: ['stylized-3d'] },
@@ -209,7 +212,8 @@ export const GAMES = [
     genres: ['rpg', 'open-world', 'action'], artStyles: ['anime', 'stylized-3d'] },
   { title: 'Fire Emblem: Three Houses', wikipediaTitle: 'Fire Emblem: Three Houses', tier: 'aaa', platforms: NINTENDO,
     genres: ['strategy', 'rpg', 'narrative'], artStyles: ['anime'] },
-  { title: 'Pikmin 4', wikipediaTitle: 'Pikmin 4', tier: 'aaa', platforms: NINTENDO,
+  // Wikidata has no developer (P178) claim for Pikmin 4.
+  { title: 'Pikmin 4', wikipediaTitle: 'Pikmin 4', developers: ['Nintendo Entertainment Planning & Development', 'Eighting'], tier: 'aaa', platforms: NINTENDO,
     genres: ['strategy', 'puzzle', 'adventure'], artStyles: ['photorealistic', 'stylized-3d'] },
   { title: "Luigi's Mansion 3", wikipediaTitle: "Luigi's Mansion 3", tier: 'aaa', platforms: NINTENDO,
     genres: ['adventure', 'puzzle', 'action'], artStyles: ['stylized-3d'] },

@@ -29,6 +29,7 @@ const HOST_DELAY_MS = {
   'steamcharts.com': 750,
   'en.wikipedia.org': 1000, // Wikimedia throttles anonymous API clients aggressively
   'www.wikidata.org': 1000,
+  'query.wikidata.org': 1000,
   'upload.wikimedia.org': 1500, // answers 429 quickly to rapid HEAD checks
   'thumb.wikimedia.org': 1500,
 }
@@ -205,15 +206,25 @@ function steamAboutToParagraphs(html) {
   s = s.replace(/<\/?(i|b|em|strong|u|a|span|sup|sub|font)\b[^>]*>/gi, '') // inline: no extra spaces
   s = s.replace(/<[^>]*>/g, ' ')
   s = decodeEntities(s)
-  const paras = s
+  const lines = s
     .split(/\n+/)
     .map((line) => {
       const isHeading = line.includes(HEADING)
       const text = collapse(line.replaceAll(HEADING, '')).replace(/\s+([,.;:!?])(?=\s|$)/g, '$1')
       return { text, isHeading }
     })
-    .filter((p) => p.text && (p.isHeading || p.text.length >= 20))
-  return paras
+    .filter((p) => p.text)
+  // Re-join prose that was hard-wrapped with <br> mid-sentence (next line starts lowercase).
+  const paras = []
+  for (const line of lines) {
+    const prev = paras.at(-1)
+    if (prev && !prev.isHeading && !line.isHeading && !/[.!?:;"”)…]$/.test(prev.text) && /^[a-z]/.test(line.text)) {
+      prev.text = `${prev.text} ${line.text}`
+    } else {
+      paras.push({ ...line })
+    }
+  }
+  return paras.filter((p) => p.isHeading || p.text.length >= 20)
 }
 
 const ABBREVIATIONS = new Set(['bros', 'mr', 'mrs', 'ms', 'dr', 'st', 'jr', 'sr', 'vs', 'inc', 'co', 'ltd', 'no', 'vol', 'feat', 'approx', 'etc', 'e.g', 'i.e', 'u.s', 'u.k'])
@@ -517,6 +528,54 @@ function earliestDay(entity) {
 
 const normalizeEpicSlug = (s) => String(s).replace(/^\/?(en-US\/)?(p|product)\//, '').replace(/\/home$/, '').replace(/^\/+|\/+$/g, '')
 
+/**
+ * One SPARQL query resolves every Steam app id (P1733) to its Wikidata item and the
+ * cross-references we use, instead of two api.php/EntityData calls per game
+ * (www.wikidata.org throttles anonymous clients hard).
+ */
+const steamWikidataRefs = new Map() // appid -> refs
+let steamWikidataPrefetched = false
+
+async function prefetchSteamWikidata(appIds) {
+  if (!appIds.length) return
+  const query = `SELECT ?appid ?item ?article ?epic ?eshop ?yt WHERE {
+    VALUES ?appid { ${appIds.map((id) => JSON.stringify(String(id))).join(' ')} }
+    ?item wdt:P1733 ?appid .
+    OPTIONAL { ?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> . }
+    OPTIONAL { ?item wdt:P6278 ?epic }
+    OPTIONAL { ?item wdt:P8084 ?eshop }
+    OPTIONAL { ?item wdt:P1651 ?yt }
+  }`
+  try {
+    const d = await getJson(`https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`, {
+      headers: { accept: 'application/sparql-results+json' },
+    })
+    const byItem = new Map() // `${appid} ${q}` -> refs
+    for (const b of d?.results?.bindings ?? []) {
+      const appid = Number(b.appid?.value)
+      const q = b.item?.value?.split('/').pop()
+      if (!appid || !q) continue
+      const key = `${appid} ${q}`
+      const r = byItem.get(key) ?? { appid, q, enwiki: null, epicSlug: null, nintendoSlug: null, youtubeIds: [] }
+      if (b.article && !r.enwiki) r.enwiki = decodeURIComponent(b.article.value.split('/wiki/')[1] ?? '').replace(/_/g, ' ') || null
+      if (b.epic && !r.epicSlug) r.epicSlug = normalizeEpicSlug(b.epic.value)
+      if (b.eshop && !r.nintendoSlug && /^[a-z0-9-]+$/.test(b.eshop.value)) r.nintendoSlug = b.eshop.value
+      if (b.yt && /^[\w-]{11}$/.test(b.yt.value) && !r.youtubeIds.includes(b.yt.value)) r.youtubeIds.push(b.yt.value)
+      byItem.set(key, r)
+    }
+    // If several items share an app id, prefer the one with an en-wiki article (then an Epic id).
+    const score = (r) => (r.enwiki ? 2 : 0) + (r.epicSlug ? 1 : 0)
+    for (const r of byItem.values()) {
+      const cur = steamWikidataRefs.get(r.appid)
+      if (!cur || score(r) > score(cur)) steamWikidataRefs.set(r.appid, r)
+    }
+    steamWikidataPrefetched = true
+    log(`Resolved ${steamWikidataRefs.size}/${appIds.length} Steam apps to Wikidata items via SPARQL`)
+  } catch (err) {
+    log(`  ! Wikidata SPARQL prefetch failed (${err.message}); falling back to per-game lookups`)
+  }
+}
+
 /** Pull the cross-reference ids we use from a Wikidata entity. */
 function wikidataRefs(entity) {
   return {
@@ -555,6 +614,16 @@ async function wikipediaScreenshots(title, coverFile) {
   return urls
 }
 
+/** Lead section of an article as capped plain-text paragraphs. */
+async function wikipediaIntro(title) {
+  const d = await getJson(
+    `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&exintro=1&redirects=1&format=json&formatversion=2&titles=${encodeURIComponent(title)}`,
+  )
+  const extract = d?.query?.pages?.[0]?.extract ?? ''
+  const paras = extract.split(/\n+/).map(collapse).filter((p) => p.length >= 20).map((text) => ({ text, isHeading: false }))
+  return capParagraphs(paras)
+}
+
 async function fetchWikipedia(entry, game) {
   const summary = await getJson(`https://en.wikipedia.org/api/rest_v1/page/summary/${wikiTitlePath(entry.wikipediaTitle)}`)
   if (summary?.type !== 'standard') game.warnings.push(`wikipedia: summary type is "${summary?.type}"`)
@@ -564,12 +633,7 @@ async function fetchWikipedia(entry, game) {
 
   // Intro paragraphs (plain text) for `about`.
   try {
-    const d = await getJson(
-      `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&exintro=1&redirects=1&format=json&formatversion=2&titles=${encodeURIComponent(game.wikipediaTitle)}`,
-    )
-    const extract = d?.query?.pages?.[0]?.extract ?? ''
-    const paras = extract.split(/\n+/).map(collapse).filter((p) => p.length >= 20).map((text) => ({ text, isHeading: false }))
-    game.about = capParagraphs(paras)
+    game.about = await wikipediaIntro(game.wikipediaTitle)
   } catch (err) {
     game.warnings.push(`wikipedia: intro extract failed (${err.message})`)
   }
@@ -792,16 +856,29 @@ async function buildGame(entry, previous) {
     await step(game, 'reviews', () => fetchSteamReviews(entry, game))
     await step(game, 'players', () => fetchPlayerStats(entry, game))
     // Wikidata cross-references: en-wiki title, Epic slug, Nintendo eShop slug, YouTube trailers.
-    const q = entry.wikidataId ?? (await step(game, 'wikidata', () => wikidataBySteamId(entry.steamAppId)))
-    if (q) {
-      const entity = await step(game, 'wikidata', () => wikidataEntity(q))
-      if (entity) {
-        refs = wikidataRefs(entity)
-        game.wikipediaTitle = refs.enwiki
-      }
-    } else if (entry.epic) {
-      game.warnings.push(`wikidata: no item with Steam app id ${entry.steamAppId}`)
+    if (!entry.wikidataId && steamWikidataPrefetched) {
+      refs = steamWikidataRefs.get(entry.steamAppId) ?? null
+    } else {
+      const q = entry.wikidataId ?? (await step(game, 'wikidata', () => wikidataBySteamId(entry.steamAppId)))
+      const entity = q ? await step(game, 'wikidata', () => wikidataEntity(q)) : null
+      if (entity) refs = wikidataRefs(entity)
     }
+    if (refs) game.wikipediaTitle = refs.enwiki
+    else if (entry.epic) game.warnings.push(`wikidata: no item found for Steam app id ${entry.steamAppId}`)
+
+    // Some store pages are pure image/video marketing with no text, and some are only promo
+    // copy (curated via aboutFrom: 'wikipedia'): use the Wikipedia lead instead.
+    const wantWikiAbout = entry.aboutFrom === 'wikipedia'
+    if ((wantWikiAbout || !game.about.length) && game.wikipediaTitle) {
+      const intro = await step(game, 'about', () => wikipediaIntro(game.wikipediaTitle))
+      if (intro?.length) {
+        if (!game.about.length) game.warnings.push('about: Steam description has no text (images/videos only); used the Wikipedia lead')
+        game.about = intro
+      }
+    } else if (wantWikiAbout) {
+      game.warnings.push('about: aboutFrom=wikipedia but no en-wiki article is linked; kept Steam text')
+    }
+    if (!game.about.length && game.shortDescription) game.about = [game.shortDescription]
   } else {
     refs = (await step(game, 'wikipedia', () => fetchWikipedia(entry, game))) ?? null
   }
@@ -828,7 +905,10 @@ async function buildGame(entry, previous) {
 
   if (entry.epic) await fetchEpic(entry, game, refs, previous)
 
-  if (entry.shortDescription) game.shortDescription = entry.shortDescription // curated override
+  // Curated overrides win over fetched values (see games.config.mjs).
+  for (const key of ['shortDescription', 'releaseDate', 'developers', 'publishers']) {
+    if (entry[key] !== undefined) game[key] = Array.isArray(entry[key]) ? [...entry[key]] : entry[key]
+  }
   if (!game.coverImage) game.warnings.push('cover: MISSING')
   return game
 }
@@ -847,6 +927,8 @@ function validateConfig() {
     if (!e.platforms?.length || e.platforms.some((p) => !PLATFORMS.includes(p))) errors.push(`${slug}: bad platforms ${e.platforms}`)
     if (!e.genres?.length || e.genres.length > 4 || e.genres.some((g) => !GENRES.includes(g))) errors.push(`${slug}: bad genres ${e.genres}`)
     if (!e.artStyles?.length || e.artStyles.length > 2 || e.artStyles.some((a) => !ART_STYLES.includes(a))) errors.push(`${slug}: bad artStyles ${e.artStyles}`)
+    if (e.releaseDate !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(e.releaseDate)) errors.push(`${slug}: releaseDate override must be yyyy-mm-dd`)
+    if (e.aboutFrom !== undefined && e.aboutFrom !== 'wikipedia') errors.push(`${slug}: aboutFrom must be 'wikipedia'`)
   }
   if (errors.length) {
     console.error('Invalid games.config.mjs:\n  ' + errors.join('\n  '))
@@ -923,7 +1005,9 @@ async function main() {
 
   const entries = GAMES.filter((e) => !only || only.includes(e.slug ?? slugify(e.title)))
   log(`Building ${entries.length} game(s)${only ? ` (--only ${only.join(',')})` : ''}`)
-  await prefetchSteamAssets(entries.filter((e) => e.steamAppId).map((e) => e.steamAppId))
+  const steamIds = entries.filter((e) => e.steamAppId).map((e) => e.steamAppId)
+  await prefetchSteamAssets(steamIds)
+  await prefetchSteamWikidata(steamIds)
 
   const results = new Map()
   let next = 0

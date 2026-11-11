@@ -53,6 +53,8 @@ export function GameCard({
   className?: string
   priority?: boolean
 }) {
+  // games without screenshots/hero art just zoom their cover on hover
+  const swap = game.hoverImage !== game.coverImage
   return (
     <div className={cn("group/card relative shrink-0", fluid ? "w-full" : sizes[size], className)}>
       <Link
@@ -65,21 +67,40 @@ export function GameCard({
           "group-hover/card:ring-2 group-hover/card:ring-primary/80 focus-visible:ring-2 focus-visible:ring-primary",
         )}
       >
-        <Image
-          src={game.coverImage}
-          alt=""
-          fill
-          sizes={fluid ? "(max-width: 640px) 33vw, 200px" : imageSizes[size]}
-          priority={priority}
-          className="object-cover transition-opacity duration-500 ease-out group-hover/card:opacity-0"
-        />
-        <Image
-          src={game.hoverImage}
-          alt=""
-          fill
-          sizes={fluid ? "(max-width: 640px) 33vw, 200px" : imageSizes[size]}
-          className="scale-110 object-cover opacity-0 transition-all duration-700 ease-out group-hover/card:scale-100 group-hover/card:opacity-100"
-        />
+        {/* Blurred fill + contained cover: portrait art fits exactly, square
+            eShop-style icons (some Nintendo games) aren't cropped. */}
+        <span
+          className={cn(
+            "absolute inset-0 transition-all duration-500 ease-out",
+            swap ? "group-hover/card:opacity-0" : "group-hover/card:scale-110",
+          )}
+        >
+          <Image
+            src={game.coverImage}
+            alt=""
+            fill
+            sizes="64px"
+            className="scale-125 object-cover opacity-70 blur-xl"
+            aria-hidden
+          />
+          <Image
+            src={game.coverImage}
+            alt=""
+            fill
+            sizes={fluid ? "(max-width: 640px) 33vw, 200px" : imageSizes[size]}
+            priority={priority}
+            className="object-contain"
+          />
+        </span>
+        {swap && (
+          <Image
+            src={game.hoverImage}
+            alt=""
+            fill
+            sizes={fluid ? "(max-width: 640px) 33vw, 200px" : imageSizes[size]}
+            className="scale-110 object-cover opacity-0 transition-all duration-700 ease-out group-hover/card:scale-100 group-hover/card:opacity-100"
+          />
+        )}
 
         {rank !== undefined && (
           <span className="absolute top-1 left-1.5 font-pixel text-2xl leading-none text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)]">

@@ -74,7 +74,7 @@ type T = typeof S.Type
 
 ## Data model (src/lib/db/schema.ts — owned by the lead; do not edit; ask in your report if you need a change)
 - `users` (id uuid, username lowercase unique, displayName, bio, location, avatarHue, avatarGameId (game cover as avatar), bannerGameId (game hero art as profile backdrop))
-- `sessions`, `games` (catalog snapshot: JSON columns `about`, `developers`, `publishers`, `genres`, `artStyles`, `platforms`, `screenshots`, `trailers {name, thumbnail, hls, youtubeId}`, `epic {productSlug, namespace, url, averageRating, polls}`, `storeLinks {steam, epic, nintendo}`, `steamReviews {desc, positive, negative, total}`, `playerStats {current, peak24h, allTimePeak, source, fetchedAt}`; `steamAppId` null for Nintendo/Epic-only games; `source: steam|wikipedia`)
+- `sessions`, `games` (catalog snapshot: JSON columns `about`, `developers`, `publishers`, `genres`, `artStyles`, `platforms`, `screenshots`, `trailers {name, thumbnail, hls, youtubeId}`, `epic {productSlug, namespace (nullable), url, averageRating (nullable), polls (often empty)}`, `storeLinks {steam, epic, nintendo}`, `steamReviews {desc, positive, negative, total}`, `playerStats {current, peak24h, allTimePeak, source, fetchedAt}`; `steamAppId` null for Nintendo/Epic-only games; `source: steam|wikipedia`)
 - `game_categories (gameId, kind: genre|art-style|tier|platform, slug)` — denormalised for browse queries.
 - `library_entries (userId, gameId, played, playing, wishlisted, liked, rating 1–10 half-stars | null, startedPlayingAt, createdAt, updatedAt)` PK(userId, gameId)
 - `reviews (id uuid, userId, gameId, body, recommended bool, hoursPlayed, containsSpoilers, createdAt, updatedAt)` unique(userId, gameId)
@@ -87,6 +87,10 @@ type T = typeof S.Type
 - Wishlisting is rejected (`ConflictError`) if the game is already played or being played.
 - Marking **playing** ⇒ `wishlisted = false`, `startedPlayingAt = now`. Stopping with "finished" ⇒ `played = true`.
 - A row with every flag false, no rating and no review is deleted.
+
+### External data caveats
+- Epic's GraphQL endpoint frequently answers server-side requests with a Cloudflare bot challenge (`cf-mitigated: challenge`, HTTP 403). Treat Epic data as best-effort: try the live call (only when `epic.namespace` is set), fall back to the snapshot, and otherwise show a friendly "see ratings on the Epic Games Store" notice with `epic.url`. Never try to bypass bot protection (same for SteamDB, which always returns 403).
+- 11 Nintendo covers are square eShop icons — `GameCard` letterboxes them over a blurred fill; do the same (object-contain + blurred bg) anywhere else you show `coverImage` large.
 
 ## Shared building blocks (owned by the lead — reuse, don't fork)
 - `@/lib/games/core`: `GameSummary` type, `gameSummarySelect` + `toGameSummary` (select shape for poster cards incl. community avg rating), `getGameBySlug`, `getGameById`, `getGameSummariesByIds`, `getAllGameSummaries`, `avgRatingSql`, `ratingCountSql`.
